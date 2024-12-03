@@ -16,7 +16,8 @@ const UploadPage = () => {
   const [selectedImage, setSelectedImage] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   let cameraRef = useRef<CameraView | null>(null);
 
@@ -74,21 +75,36 @@ const UploadPage = () => {
   };
 
   // Handle submitting the image
-  const submitImage = () => {
+  const submitImage = async () => {
 
     if (!selectedImage) {
       Alert.alert("Error", "Please select or take a photo before submitting.");
       return;
     }
 
-    // Simulate sending the image to the backend
-    Alert.alert(
-      "Processing",
-      "Your image is being sent to the server for analysis."
-    );
-    console.log("Image URI:", selectedImage);
+    setLoading(true);
+    setError(null);
 
-    // Here, you would implement the actual POST request to your backend
+    try{
+    const res = await fetch("https://api.whatsthatdog.com/upload", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        image: selectedImage.base64,
+      }),
+    });
+
+    const data = await res.json();
+    
+    console.log(data);
+  }
+  catch (error) {
+    console.error("Error:", error);
+    setError("An error occurred. Please try again later.");
+    setLoading(false);
+  }
   };
 
   return (
