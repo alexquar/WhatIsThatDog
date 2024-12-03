@@ -9,7 +9,7 @@ const About = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView style={styles.spacer}>
         <View style={styles.headerContainer}>
           <Image
             style={styles.logo}
@@ -59,7 +59,7 @@ const About = () => {
         </View>
 
         <View style={styles.datasetSection}>
-          <Text style={styles.subHeader}>Our Training Data:</Text>
+          <Text style={styles.footerHeader}>Our Training Data:</Text>
           <Text style={styles.body}>
             The app was trained on a robust and accurately labeled dataset from
             trusted sources. Want to know more? Visit the dataset page below.
@@ -125,6 +125,12 @@ const styles = StyleSheet.create({
         color: '#5fadae',
         marginBottom: 10,
       },
+      footerHeader: {   
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#a9bcd4',
+        marginBottom: 10,
+        },
       featureItem: {
         fontSize: 16,
         color: '#444',

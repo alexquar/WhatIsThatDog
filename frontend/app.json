@@ -33,6 +33,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#fbfdfd"
         }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow What's that dog to access your photos.",
+          "isAccessMediaLocationEnabled": "true"
+        }
       ]
     ],
     "experiments": {

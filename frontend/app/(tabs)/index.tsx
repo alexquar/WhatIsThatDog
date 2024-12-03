@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
   },
   spacer:{
     margin: 20,
-
   },
   headerContainer: {
     flexDirection: 'column',
