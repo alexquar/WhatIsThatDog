@@ -18,11 +18,12 @@ const UploadPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
-  let cameraRef = useRef<typeof Camera | null>(null);
+  let cameraRef = useRef<CameraView | null>(null);
 
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   // Handle image selection from the gallery
   const pickImage = async () => {
+    setSelectedImage(null);
     setCameraOpen(false);
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -37,6 +38,7 @@ const UploadPage = () => {
 
   // Handle taking a photo with the camera
   const prepTakePic = async () => {
+    setSelectedImage(null);
     const { status } = await Camera.requestCameraPermissionsAsync();
     setHasPermission(status === "granted");
 
@@ -48,18 +50,32 @@ const UploadPage = () => {
   };
 
   const takePic = async () => {
+    if (!cameraRef.current) {
+      Alert.alert("Error", "Camera not active");
+      return;
+    }
     let options = {
       quality: 1,
       base64: true,
       exif: false
     };
-
-    // let newPhoto = await cameraRef.current?.takePictureAsync(options);
-    // setSelectedImage(newPhoto);
+    const takenPhoto = await cameraRef.current.takePictureAsync(options);
+    if (takenPhoto) {
+      setSelectedImage({
+        uri: takenPhoto.uri,
+        width: takenPhoto.width,
+        height: takenPhoto.height,
+        assetId: null,
+        base64: takenPhoto.base64,
+        fileSize: 0,
+      });
+      setCameraOpen(false);
+    }
   };
 
   // Handle submitting the image
   const submitImage = () => {
+
     if (!selectedImage) {
       Alert.alert("Error", "Please select or take a photo before submitting.");
       return;
@@ -84,13 +100,13 @@ const UploadPage = () => {
             source={require("../../assets/images/logo.png")} // Adjust the path as needed
             resizeMode="contain"
           />
-          <Text style={styles.header}>Upload a Dog Photo</Text>
+          <Text style={styles.header}>Find out "What's that dog?!"</Text>
         </View>
 
         <View style={styles.introSection}>
           <Text style={styles.body}>
             Take a photo or upload an image of the dog you want to identify. Our
-            app will process it and provide you with detailed breed information.
+            app will process it and provide you with detailed breed information. Please place the dog in the center of the picture as we may need to trim the image! The clearer the image and more of the dog in the image, the better the results
           </Text>
         </View>
 
@@ -105,14 +121,16 @@ const UploadPage = () => {
         </View>
 
         {cameraOpen && (
-          <CameraView style={styles.previewContainer} facing="front">
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity onPress={takePic} style={styles.button}>
+          <View style={styles.previewContainer}>
+          <CameraView flash="off" style={styles.cameraPreview} facing="back" ref={cameraRef}>
+            <View style={styles.cameraOverlay}>
+              <TouchableOpacity onPress={takePic} style={styles.cameraButton}>
                 <Text style={styles.buttonText}>Take Picture</Text>
               </TouchableOpacity>
             </View>
             <StatusBar />
           </CameraView>
+          </View>
         )}
 
         {selectedImage && (
@@ -184,6 +202,18 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     alignItems: "center",
   },
+  cameraOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    padding: 20,
+  },
+  cameraButton: {
+    backgroundColor: "#5fadae",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
   button: {
     backgroundColor: "#5fadae",
     paddingVertical: 15,
@@ -215,6 +245,12 @@ const styles = StyleSheet.create({
   previewImage: {
     width: 200,
     height: 200,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  cameraPreview:{
+    width: '100%',
+    height: 600,
     borderRadius: 10,
     marginTop: 10,
   },

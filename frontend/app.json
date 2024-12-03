@@ -35,7 +35,7 @@
         }
       ],
       [
-        "expo-media-library",
+        "expo-camera",
         {
           "photosPermission": "Allow What's that dog to access your photos.",
           "isAccessMediaLocationEnabled": "true"
