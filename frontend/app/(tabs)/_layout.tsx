@@ -14,22 +14,20 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarInactiveTintColor: "#8492c1",
+        tabBarActiveTintColor: "#fbfdfd",
+        tabBarStyle: {
+          backgroundColor: "#5fadae",
+          borderTopWidth: 1,
+          borderTopColor: "#a9bcd4",
+          height: 84,
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
+          headerShown: false,
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
@@ -37,14 +35,16 @@ export default function TabLayout() {
         name="upload"
         options={{
           title: 'Upload',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.arrow.up" color={color} />,
         }}
       />
         <Tabs.Screen
         name="about"
         options={{
           title: 'About',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="info.circle.fill" color={color} />,
         }}
       />
     </Tabs>
