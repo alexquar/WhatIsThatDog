@@ -1,8 +1,8 @@
 from flask import Flask
 from upload_controller import upload
-
+from flask_cors import CORS
 app = Flask(__name__)
-
+CORS(app)
 # Define the route and use 'upload' as the view function
 @app.route('/', methods=['POST'])
 def handle_upload():

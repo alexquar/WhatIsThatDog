@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraView } from "expo-camera";
+
 const UploadPage = () => {
   const [selectedImage, setSelectedImage] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
@@ -84,16 +85,18 @@ const UploadPage = () => {
 
     setLoading(true);
     setError(null);
-
+    const formData = new FormData();
+    const response = await fetch(selectedImage.uri);
+    const blob = await response.blob();
+    formData.append("file", blob, "image.jpg");
+    console.log("we got here");
     try{
-    const res = await fetch("https://api.whatsthatdog.com/upload", {
+    const res = await fetch("http://127.0.0.1:5000", {
       method: "POST",
+      body: formData,
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        image: selectedImage.base64,
-      }),
     });
 
     const data = await res.json();
