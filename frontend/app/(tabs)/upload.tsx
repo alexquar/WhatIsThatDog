@@ -9,6 +9,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  Modal,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraView } from "expo-camera";
@@ -18,7 +19,12 @@ const UploadPage = () => {
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState(null);
+  interface Results {
+    breed: string;
+    breed_info: string;
+  }
+
+  const [results, setResults] = useState<Results | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   let cameraRef = useRef<CameraView | null>(null);
 
@@ -86,22 +92,30 @@ const UploadPage = () => {
     setLoading(true);
     setError(null);
     const formData = new FormData();
-    const response = await fetch(selectedImage.uri);
-    const blob = await response.blob();
-    formData.append("file", blob, "image.jpg");
-    console.log("we got here");
+    formData.append("file", {
+      uri: selectedImage.uri,
+      type: selectedImage.type || 'image/jpeg',
+      name: selectedImage.uri.split('/').pop() || 'image.jpg' // Ensure the file name is extracted properly
+    } as unknown as File);
     try{
-    const res = await fetch("http://127.0.0.1:5000", {
+    const res = await fetch("http://10.0.0.249:5000", {
       method: "POST",
       body: formData,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'multipart/form-data',
       },
     });
 
     const data = await res.json();
-    
     console.log(data);
+    if(data.success){
+      setResults(data.data);
+      setLoading(false);
+      setError(null);
+      return
+    }
+    setLoading(false);
+    setError("An error occurred. Please try again later.");
   }
   catch (error) {
     console.error("Error:", error);
@@ -168,7 +182,7 @@ const UploadPage = () => {
             style={styles.buttonSecondary}
             onPress={submitImage}
           >
-            <Text style={styles.buttonSecondaryText}>Submit</Text>
+            <Text style={styles.buttonSecondaryText}>{loading ? "Submitting...":"Submit"}</Text>
           </TouchableOpacity>
         </View>
 
@@ -176,6 +190,39 @@ const UploadPage = () => {
           <Text style={styles.footerText}>Made with ❤️ by Dog Lovers</Text>
           <Text style={styles.footerText}>© 2024 What's That Dog?!</Text>
         </View>
+
+        <Modal 
+        transparent={true}
+        visible={results !== null}
+        animationType="slide"
+        onRequestClose={() => {
+          setResults(null)
+          setSelectedImage(null)
+          setError(null)
+        }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+            <View style={styles.previewContainer}>
+            <Image
+              source={{ uri: selectedImage?.uri }}
+              style={styles.previewImage}
+            />
+          </View>
+              <Text style={styles.modalTitle}>{results?.breed}</Text>
+              <Text style={styles.modalText}>{results?.breed_info}</Text>
+
+              <TouchableOpacity onPress={() => {
+                setResults(null)
+                setSelectedImage(null)
+                setError(null)
+              }} style={styles.modalButton}>
+                <Text style={styles.modalButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -286,6 +333,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#040909",
   },
+      modalOverlay: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+    },
+    modalContent: {
+      height: "50%",
+      width: 300,
+      padding: 20,
+      backgroundColor: "white",
+      borderRadius: 10,
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 5, // For Android
+    },
+    modalTitle: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: "#8492c1", // Change to match your theme
+      marginBottom: 10,
+    },
+    modalText: {
+      fontSize: 16,
+      color: "#040909", // Text color, change as needed
+      marginBottom: 20,
+      textAlign: "center",
+    },
+    modalButton: {
+      backgroundColor: "#5fadae", // Button color
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    modalButtonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
 });
 
 export default UploadPage;

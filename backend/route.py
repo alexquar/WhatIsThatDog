@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from upload_controller import upload
 from flask_cors import CORS
 app = Flask(__name__)
