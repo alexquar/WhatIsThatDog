@@ -1,55 +1,229 @@
+#this is all the code that was used in a notebook on kaglge to get our weights and biases
+
+#it has been placed here for your convenience to see the process
+import os, time
+import numpy as np
+import random
+random.seed(42)
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, classification_report
+
 import torch
-from torchvision import models, transforms
-from PIL import Image
-import os
+torch.manual_seed(42)
+from torch import nn
+from torch.optim import SGD, Adam
+from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data.dataset import Dataset
+from torchvision.models import resnet
+from torchvision import transforms, datasets, models
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-# 1. Load the model
-def load_model(model_path, num_classes, dropout_ratio):
-    model = models.resnet152(pretrained=False)
-    num_ftrs = model.fc.in_features
-    model.fc = torch.nn.Sequential(
-        torch.nn.Linear(num_ftrs, 256),
-        torch.nn.ReLU(),
-        torch.nn.Dropout(p=dropout_ratio),
-        torch.nn.Linear(256, num_classes)
-    )
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    model.eval()
-    return model
+def load_transform_images(images_path, presplit, train_split, test_split, val_split, batch_size, threads, mean, std):
+    train_transform = transforms.Compose([
+                                         #transforms.RandomRotation(degrees=15),
+                                         #transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                                         #transforms.RandomResizedCrop((224,224)),
+                                         transforms.Resize((224,224)),
+                                         transforms.RandomHorizontalFlip(),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize(torch.Tensor(mean),
+                                                              torch.Tensor(std))])
 
-# 2. Define transformations (match those used during training)
-def transform_image(image_path, mean, std):
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=torch.Tensor(mean), std=torch.Tensor(std)),
-    ])
-    image = Image.open(image_path).convert('RGB')
-    return transform(image).unsqueeze(0)
+    test_transform = transforms.Compose([
+                                        transforms.Resize((224,224)),
+                                        #transforms.CenterCrop((224,224)),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(torch.Tensor(mean),
+                                                             torch.Tensor(std))])
 
-# 3. Predict function
-def predict_breed(model, image_tensor, class_names):
-    with torch.no_grad():
-        outputs = model(image_tensor)
-        _, predicted = outputs.max(1)
-    return class_names[predicted.item()]
+    val_transform = transforms.Compose([
+                                       transforms.Resize((224,224)),
+                                       #transforms.CenterCrop((224,224)),
+                                       transforms.ToTensor(),
+                                       transforms.Normalize(torch.Tensor(mean),
+                                                            torch.Tensor(std))])
 
-# Main
-if __name__ == "__main__":
-    # Paths and settings
-    model_path = "backend/resnet152.pth"  # Path to your saved model
-    image_path = "backend/gryff.jpg"  # Path to the image you want to classify
-    class_names = ['Chihuahua', 'Japanese_spaniel', 'Maltese_dog', 'Pekinese', 'Shih-Tzu', 'Blenheim_spaniel', 'papillon', 'toy_terrier', 'Rhodesian_ridgeback', 'Afghan_hound', 'basset', 'beagle', 'bloodhound', 'bluetick', 'black-and-tan_coonhound', 'Walker_hound', 'English_foxhound', 'redbone', 'borzoi', 'Irish_wolfhound', 'Italian_greyhound', 'whippet', 'Ibizan_hound', 'Norwegian_elkhound', 'otterhound', 'Saluki', 'Scottish_deerhound', 'Weimaraner', 'Staffordshire_bullterrier', 'American_Staffordshire_terrier', 'Bedlington_terrier', 'Border_terrier', 'Kerry_blue_terrier', 'Irish_terrier', 'Norfolk_terrier', 'Norwich_terrier', 'Yorkshire_terrier', 'wire-haired_fox_terrier', 'Lakeland_terrier', 'Sealyham_terrier', 'Airedale', 'cairn', 'Australian_terrier', 'Dandie_Dinmont', 'Boston_bull', 'miniature_schnauzer', 'giant_schnauzer', 'standard_schnauzer', 'Scotch_terrier', 'Tibetan_terrier', 'silky_terrier', 'soft-coated_wheaten_terrier', 'West_Highland_white_terrier', 'Lhasa', 'flat-coated_retriever', 'curly-coated_retriever', 'golden_retriever', 'Labrador_retriever', 'Chesapeake_Bay_retriever', 'German_short-haired_pointer', 'vizsla', 'English_setter', 'Irish_setter', 'Gordon_setter', 'Brittany_spaniel', 'clumber', 'English_springer', 'Welsh_springer_spaniel', 'cocker_spaniel', 'Sussex_spaniel', 'Irish_water_spaniel', 'kuvasz', 'schipperke', 'groenendael', 'malinois', 'briard', 'kelpie', 'komondor', 'Old_English_sheepdog', 'Shetland_sheepdog', 'collie', 'Border_collie', 'Bouvier_des_Flandres', 'Rottweiler', 'German_shepherd', 'Doberman', 'miniature_pinscher', 'Greater_Swiss_Mountain_dog', 'Bernese_mountain_dog', 'Appenzeller', 'EntleBucher', 'boxer', 'bull_mastiff', 'Tibetan_mastiff', 'French_bulldog', 'Great_Dane', 'Saint_Bernard', 'Eskimo_dog', 'malamute', 'Siberian_husky', 'affenpinscher', 'basenji', 'pug', 'Leonberg', 'Newfoundland', 'Great_Pyrenees', 'Samoyed', 'Pomeranian', 'chow', 'keeshond', 'Brabancon_griffon', 'Pembroke', 'Cardigan', 'toy_poodle', 'miniature_poodle', 'standard_poodle', 'Mexican_hairless', 'dingo', 'dhole', 'African_hunting_dog']  # List of class names
-    mean = [0.485, 0.456, 0.406]
-    std = [0.229, 0.224, 0.225]
-    dropout_ratio = 0.9
+    if presplit:
+        try:
+            training_set = datasets.ImageFolder(root=images_path+'/train', transform=train_transform)
+            validation_set = datasets.ImageFolder(root=images_path+'/val', transform=val_transform)
+        except FileNotFoundError:
+            raise Exception('Not presplit into Training and Validation sets')
+        try:
+            testing_set = datasets.ImageFolder(root=images_path+'/test', transform=test_transform)
+        except:
+            testing_set = validation_set
+        dataset = training_set
+    else:
+        dataset = datasets.ImageFolder(root=images_path, transform=train_transform)
+        train_size = int(train_split * len(dataset))
+        test_size = int(test_split * len(dataset))
+        val_size = len(dataset) - train_size - test_size
+        training_set, testing_set, validation_set = torch.utils.data.random_split(dataset, [train_size, test_size, val_size])
+    
+    training_set_loader = DataLoader(training_set, batch_size=batch_size, num_workers=threads, shuffle=True)
+    validation_set_loader = DataLoader(validation_set, batch_size=batch_size, num_workers=threads, shuffle=True)
+    testing_set_loader = DataLoader(testing_set, batch_size=batch_size, num_workers=threads, shuffle=False)
 
-    # Load model
-    model = load_model(model_path, num_classes=len(class_names), dropout_ratio=dropout_ratio)
+    return training_set_loader, testing_set_loader, validation_set_loader, dataset, training_set, testing_set, validation_set
 
-    # Transform image
-    image_tensor = transform_image(image_path, mean, std)
+def load_network(net_model, net_name, dropout_ratio, class_names, unfrozen_layers):
+    for name, child in net_model.named_children():
+        if name in unfrozen_layers:
+            print(name + ' is unfrozen')
+            for param in child.parameters():
+                param.requires_grad = True
+        else:
+            print(name + ' is frozen')
+            for param in child.parameters():
+                param.requires_grad = False
 
-    # Predict
-    breed = predict_breed(model, image_tensor, class_names)
-    print(f"The predicted dog breed is: {breed.replace('_', ' ')}")
+    if net_name.startswith('resnet'):
+        num_ftrs = net_model.fc.in_features
+        net_model.fc = nn.Sequential(nn.Linear(num_ftrs, 256),
+                                     nn.ReLU(),
+                                     nn.Dropout(p=dropout_ratio),
+                                     nn.Linear(256, len(class_names)))
+
+    elif net_name.startswith('vgg'):
+        num_ftrs = net_model.classifier[6].in_features
+        net_model.classifier[6] = nn.Sequential(nn.Linear(num_ftrs, 256),
+                                                nn.ReLU(),
+                                                nn.Dropout(p=dropout_ratio),
+                                                nn.Linear(256, len(class_names)))
+    display(net_model)
+    
+    total_params = sum(param.numel() for param in net_model.parameters())
+    print(f'{total_params:,} total parameters')
+
+    total_trainable_params = sum(param.numel() for param in net_model.parameters() if param.requires_grad)
+    print(f'{total_trainable_params:,} training parameters')
+    
+    return net_model
+
+def plot_images_per_class(images_path, mode, title):
+    data_folder = images_path+'/'+mode+'/'
+    item_dict = {root.split('/')[-1]: len(files) for root, _, files in os.walk(data_folder)}
+   
+    plt.figure(figsize=(20,8))
+    plt.bar(list(item_dict.keys())[1:], list(item_dict.values())[1:], color='g')
+    plt.title(title)
+    plt.xticks(rotation=90)
+    plt.xlabel('Class')
+    plt.ylabel('Number of Images')
+    plt.show()
+    
+    def display_confusion_matrix(results_path, model_name, y_true, preds, class_names, annot, figsize=(9,7), fontsize=14):
+    #if not os.path.exists(results_path+'/'+model_name):
+    #    os.makedirs(results_path+'/'+model_name)
+
+    acc = accuracy_score(y_true, preds.argmax(1))
+    score = f1_score(y_true, preds.argmax(1), average='micro')
+    cm = confusion_matrix(y_true, preds.argmax(1))
+    df_cm = pd.DataFrame(cm, index=class_names, columns=class_names)
+    np.set_printoptions(precision=2)
+    
+    string1 = 'Confusion Matrix for Testing Data'
+    string2 = f'Accuracy is {acc:0.3f}; F1-score is {score:0.3f}'
+    title_str = string1.center(len(string2))+'\n'+string2
+
+    plt.figure(figsize=figsize)
+    sns.set(font_scale=1.2)
+    sns.heatmap(df_cm, annot=annot, annot_kws={'size': fontsize}, fmt='d')
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.title(title_str)
+    
+    #plt.savefig(str(results_path)+'/'+str(model_name)+'/'+str(model_name)+'_conf_mat.png')
+    
+def plot_logs_classification(results_path, model_name, logs):
+    """
+    """
+    #if not os.path.exists(results_path+'/'+model_name):
+    #    os.makedirs(results_path+'/'+model_name)
+        
+    training_losses, training_accuracies, test_losses, test_accuracies = \
+        logs[0]['train'], logs[1]['train'], logs[0]['val'], logs[1]['val']
+    
+    plt.figure(figsize=(18,6))
+    plt.subplot(121)
+    plt.plot(training_losses)
+    plt.plot(test_losses)
+    plt.legend(['Training Loss', 'Validation Loss'])
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.grid()
+    
+    plt.subplot(122)
+    plt.plot(training_accuracies)
+    plt.plot(test_accuracies)
+    plt.legend(['Training Accuracy', 'Validation Accuracy'])
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.grid()
+    
+    images_path = '/kaggle/input/stanford-dogs-dataset/images/Images/'
+results_path = images_path+'_results'
+presplit = False
+train_split = 0.5
+val_split = 0.25
+test_split = 0.25
+batch_size = 128
+threads = 0
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
+
+training_set_loader, testing_set_loader, validation_set_loader, dataset, training_set, testing_set, validation_set = \
+                  load_transform_images(images_path, presplit, train_split, test_split, val_split, batch_size, threads, mean, std)
+
+class_names = dataset.classes
+class_names = [classes[10:] for classes in class_names]
+print(class_names)
+
+if presplit:
+    plot_images_per_class(images_path, mode='train', title='Distribution of Training Data per Class')
+    plot_images_per_class(images_path, mode='val', title='Distribution of Validation Data per Class')
+    try:
+        plot_images_per_class(images_path, mode='test', title='Distribution of Testing Data per Class')
+    except:
+        pass
+else:
+    plot_images_per_class(images_path, mode='', title='Distribution of All Images per Class')
+    
+if presplit:
+    plot_images_per_class(images_path, mode='train', title='Distribution of Training Data per Class')
+    plot_images_per_class(images_path, mode='val', title='Distribution of Validation Data per Class')
+    try:
+        plot_images_per_class(images_path, mode='test', title='Distribution of Testing Data per Class')
+    except:
+        pass
+else:
+    plot_images_per_class(images_path, mode='', title='Distribution of All Images per Class')
+    
+    learning_rate = 0.0001
+epochs = 100
+momentum = 0.9
+weight_decay = 0
+patience = 3
+n_epochs_stop = 5
+
+net_model, loss_acc, y_testing, preds = train_model(results_path, net_name, net_model, training_set_loader, validation_set_loader, 
+                                                    learning_rate, epochs, momentum, weight_decay, patience, n_epochs_stop)
+
+plot_logs_classification(results_path, net_name, loss_acc)
+
+
+preds_test, y_true = test_model(net_name, net_model, testing_set_loader)
+
+display_confusion_matrix(results_path, net_name, y_true, preds_test, class_names, annot=True, figsize=(19,17), fontsize=8)
+
+print(classification_report(y_true, preds_test.argmax(1), target_names=class_names))
+
+torch.save(net_model.state_dict(), '/kaggle/working/resnet152.pth')
+
+#download the file 
+
+#here is the kaggle link https://www.kaggle.com/code/alexquarrie/notebook12104a5dee/edit
+

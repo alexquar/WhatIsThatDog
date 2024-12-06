@@ -115,12 +115,14 @@ const UploadPage = () => {
       return
     }
     setLoading(false);
-    setError("An error occurred. Please try again later.");
+    setError("An error occurred and your dog could not be identified. Please try again later.");
+    Alert.alert("Error :(", error ?? "");
   }
-  catch (error) {
-    console.error("Error:", error);
+  catch (err) {
+    console.error(err);
     setError("An error occurred. Please try again later.");
     setLoading(false);
+    Alert.alert("Error :(", error ?? "");
   }
   };
 
@@ -138,9 +140,7 @@ const UploadPage = () => {
 
         <View style={styles.introSection}>
           <Text style={styles.body}>
-            Take a photo or upload an image of the dog you want to identify. Our
-            app will process it and provide you with detailed breed information. Please place the dog in the center of the picture as we may need to trim the image! The clearer the image and more of the dog in the image, the better the results
-          </Text>
+            Please place the dog in the center of the picture. The clearer the image and more of the dog in the image, the better the results. Keep in mind our modal can make mistakes and can only handle 120 different breeds which you can observe in the training data on the about page.    </Text>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   body: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#040909",
     marginBottom: 20,
     lineHeight: 22,
@@ -340,9 +340,11 @@ const styles = StyleSheet.create({
       backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
     },
     modalContent: {
-      height: "50%",
+      minHeight: "50%",
       width: 300,
-      padding: 20,
+      paddingHorizontal: 20,
+      paddingTop: 10,
+      paddingBottom: 20,
       backgroundColor: "white",
       borderRadius: 10,
       alignItems: "center",
