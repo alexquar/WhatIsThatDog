@@ -65,7 +65,7 @@ const UploadPage = () => {
     let options = {
       quality: 1,
       base64: true,
-      exif: false
+      exif: false,
     };
     const takenPhoto = await cameraRef.current.takePictureAsync(options);
     if (takenPhoto) {
@@ -83,7 +83,6 @@ const UploadPage = () => {
 
   // Handle submitting the image
   const submitImage = async () => {
-
     if (!selectedImage) {
       Alert.alert("Error", "Please select or take a photo before submitting.");
       return;
@@ -94,36 +93,36 @@ const UploadPage = () => {
     const formData = new FormData();
     formData.append("file", {
       uri: selectedImage.uri,
-      type: selectedImage.type || 'image/jpeg',
-      name: selectedImage.uri.split('/').pop() || 'image.jpg' // Ensure the file name is extracted properly
+      type: selectedImage.type || "image/jpeg",
+      name: selectedImage.uri.split("/").pop() || "image.jpg", // Ensure the file name is extracted properly
     } as unknown as File);
-    try{
-    const res = await fetch("http://10.0.0.249:5000", {
-      method: "POST",
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    try {
+      const res = await fetch("http://10.0.0.249:5000", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    const data = await res.json();
-    console.log(data);
-    if(data.success){
-      setResults(data.data);
+      const data = await res.json();
+      if (data.success) {
+        setResults(data.data);
+        setLoading(false);
+        setError(null);
+        return;
+      }
       setLoading(false);
-      setError(null);
-      return
+      setError(
+        "An error occurred and your dog could not be identified. Please try again later."
+      );
+      Alert.alert("Error :(", error ?? "");
+    } catch (err) {
+      console.error(err);
+      setError("An error occurred. Please try again later.");
+      setLoading(false);
+      Alert.alert("Error :(", error ?? "");
     }
-    setLoading(false);
-    setError("An error occurred and your dog could not be identified. Please try again later.");
-    Alert.alert("Error :(", error ?? "");
-  }
-  catch (err) {
-    console.error(err);
-    setError("An error occurred. Please try again later.");
-    setLoading(false);
-    Alert.alert("Error :(", error ?? "");
-  }
   };
 
   return (
@@ -140,7 +139,12 @@ const UploadPage = () => {
 
         <View style={styles.introSection}>
           <Text style={styles.body}>
-            Please place the dog in the center of the picture. The clearer the image and more of the dog in the image, the better the results. Keep in mind our modal can make mistakes and can only handle 120 different breeds which you can observe in the training data on the about page.    </Text>
+            Please place the dog in the center of the picture. The clearer the
+            image and more of the dog in the image, the better the results. Keep
+            in mind our modal can make mistakes and can only handle 120
+            different breeds which you can observe in the training data on the
+            about page.{" "}
+          </Text>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -155,14 +159,19 @@ const UploadPage = () => {
 
         {cameraOpen && (
           <View style={styles.previewContainer}>
-          <CameraView flash="off" style={styles.cameraPreview} facing="back" ref={cameraRef}>
-            <View style={styles.cameraOverlay}>
-              <TouchableOpacity onPress={takePic} style={styles.cameraButton}>
-                <Text style={styles.buttonText}>Take Picture</Text>
-              </TouchableOpacity>
-            </View>
-            <StatusBar />
-          </CameraView>
+            <CameraView
+              flash="off"
+              style={styles.cameraPreview}
+              facing="back"
+              ref={cameraRef}
+            >
+              <View style={styles.cameraOverlay}>
+                <TouchableOpacity onPress={takePic} style={styles.cameraButton}>
+                  <Text style={styles.buttonText}>Take Picture</Text>
+                </TouchableOpacity>
+              </View>
+              <StatusBar />
+            </CameraView>
           </View>
         )}
 
@@ -182,7 +191,9 @@ const UploadPage = () => {
             style={styles.buttonSecondary}
             onPress={submitImage}
           >
-            <Text style={styles.buttonSecondaryText}>{loading ? "Submitting...":"Submit"}</Text>
+            <Text style={styles.buttonSecondaryText}>
+              {loading ? "Submitting..." : "Submit"}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -191,38 +202,42 @@ const UploadPage = () => {
           <Text style={styles.footerText}>© 2024 What's That Dog?!</Text>
         </View>
 
-        <Modal 
-        transparent={true}
-        visible={results !== null}
-        animationType="slide"
-        onRequestClose={() => {
-          setResults(null)
-          setSelectedImage(null)
-          setError(null)
-        }}
+        <Modal
+          transparent={true}
+          visible={results !== null}
+          animationType="slide"
+          onRequestClose={() => {
+            setResults(null);
+            setSelectedImage(null);
+            setError(null);
+          }}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-            <View style={styles.previewContainer}>
-            <Image
-              source={{ uri: selectedImage?.uri }}
-              style={styles.previewImage}
-            />
-          </View>
-              <Text style={styles.modalTitle}>{results?.breed}</Text>
+              <View style={styles.previewContainer}>
+                <Image
+                  source={{ uri: selectedImage?.uri }}
+                  style={styles.previewImage}
+                />
+              </View>
+              <Text style={styles.modalTitle}>
+                {results?.breed}
+              </Text>
               <Text style={styles.modalText}>{results?.breed_info}</Text>
 
-              <TouchableOpacity onPress={() => {
-                setResults(null)
-                setSelectedImage(null)
-                setError(null)
-              }} style={styles.modalButton}>
+              <TouchableOpacity
+                onPress={() => {
+                  setResults(null);
+                  setSelectedImage(null);
+                  setError(null);
+                }}
+                style={styles.modalButton}
+              >
                 <Text style={styles.modalButtonText}>Close</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -314,8 +329,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
   },
-  cameraPreview:{
-    width: '100%',
+  cameraPreview: {
+    width: "100%",
     height: 600,
     borderRadius: 10,
     marginTop: 10,
@@ -333,50 +348,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#040909",
   },
-      modalOverlay: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
-    },
-    modalContent: {
-      minHeight: "50%",
-      width: 300,
-      paddingHorizontal: 20,
-      paddingTop: 10,
-      paddingBottom: 20,
-      backgroundColor: "white",
-      borderRadius: 10,
-      alignItems: "center",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 5, // For Android
-    },
-    modalTitle: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: "#8492c1", // Change to match your theme
-      marginBottom: 10,
-    },
-    modalText: {
-      fontSize: 16,
-      color: "#040909", // Text color, change as needed
-      marginBottom: 20,
-      textAlign: "center",
-    },
-    modalButton: {
-      backgroundColor: "#5fadae", // Button color
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-    },
-    modalButtonText: {
-      color: "#fff",
-      fontSize: 16,
-      fontWeight: "bold",
-    },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+  },
+  modalContent: {
+    minHeight: "50%",
+    width: 300,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5, // For Android
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#8492c1", // Change to match your theme
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  modalText: {
+    fontSize: 16,
+    color: "#040909", // Text color, change as needed
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalButton: {
+    backgroundColor: "#5fadae", // Button color
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
 
 export default UploadPage;

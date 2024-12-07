@@ -1,0 +1,14 @@
+Flask==3.0.3
+Flask-Cors==5.0.0
+flask-marshmallow==1.2.1
+Flask-Migrate==4.0.7
+matplotlib==3.9.3
+matplotlib-inline==0.1.7
+nodeenv==1.9.1
+numpy==2.1.3
+python-dotenv==1.0.1
+requests==2.32.3
+Routes==2.5.1
+torch==2.5.1
+torchvision==0.20.1
+virtualenv==20.28.0
