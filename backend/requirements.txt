@@ -29,6 +29,7 @@ Flask-Migrate==4.0.7
 Flask-SQLAlchemy==3.1.1
 fonttools==4.55.1
 fsspec==2024.10.0
+gunicorn==23.0.0
 h11==0.14.0
 httpcore==1.0.5
 httpx==0.27.2
@@ -100,4 +101,3 @@ urllib3==2.2.3
 virtualenv==20.28.0
 wcwidth==0.2.13
 Werkzeug==3.0.4
-
