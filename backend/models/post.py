@@ -1,18 +1,14 @@
 from pydantic import BaseModel
-from enum import Enum
 from datetime import datetime
-
-
-class Breed(str, Enum):
-    pass
-
 class PostCreate(BaseModel):
     date: datetime
     description: str
     dog_name: str
-    dog_breed: Breed
+    dog_breed: str
+    location: str
   
 class Post(PostCreate):
-    id: str
+    _id: str
     file: str
+    likes: int = 0
     

@@ -10,9 +10,12 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  TextInput
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraView } from "expo-camera";
+import { router } from "expo-router";
+
 
 const UploadPage = () => {
   const [selectedImage, setSelectedImage] =
@@ -23,10 +26,13 @@ const UploadPage = () => {
     breed: string;
     breed_info: string;
   }
-
+  const [createPost, setCreatePost] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   let cameraRef = useRef<CameraView | null>(null);
+  const [description, setDescription] = useState("");
+  const [dogName, setDogName] = useState("");
+  const [location, setLocation] = useState("");
 
   const [hasPermission, setHasPermission] = useState<boolean>(false);
   // Handle image selection from the gallery
@@ -97,7 +103,7 @@ const UploadPage = () => {
       name: selectedImage.uri.split("/").pop() || "image.jpg", // Ensure the file name is extracted properly
     } as unknown as File);
     try {
-      const res = await fetch("http://10.0.0.249:5000", {
+      const res = await fetch("http://10.0.0.64:5000", {
         method: "POST",
         body: formData,
         headers: {
@@ -124,6 +130,56 @@ const UploadPage = () => {
       Alert.alert("Error :(", error ?? "");
     }
   };
+
+  const handleCreatePost = async () => {
+    if (!dogName || !location || !description) {
+      Alert.alert("Error", "Please fill in all fields to create a post.");
+      return;
+    }
+    setLoading(true);
+        const formData = new FormData();
+    formData.append("file", {
+      uri: selectedImage?.uri,
+      type: selectedImage?.type || "image/jpeg",
+      name: selectedImage?.uri.split("/").pop() || "image.jpg", // Ensure the file name is extracted properly
+    } as unknown as File);
+    formData.append("dog_name", dogName);
+    formData.append("location", location);
+    formData.append("description", description);
+    formData.append("dog_breed", results?.breed || "");
+    formData.append("date", new Date().toISOString());
+    try {
+      const response = await fetch("http://10.0.0.64:5000/post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        Alert.alert("Success", "Post created successfully!");
+        setCreatePost(false);
+        setDogName("");
+        setLocation("");
+        setDescription("");
+        setResults(null);
+        setSelectedImage(null);
+        router.push("/feed");
+      }
+      else {
+        Alert.alert("Error", "Failed to create post. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating post:", error);
+      Alert.alert("Error", "An error occurred while creating the post.");
+    }
+    setLoading(false);
+  };
+
+
+
+    
 
   return (
     <SafeAreaView style={styles.container}>
@@ -224,17 +280,86 @@ const UploadPage = () => {
                 {results?.breed}
               </Text>
               <Text style={styles.modalText}>{results?.breed_info}</Text>
+              {
+                createPost &&
+                <View>
+  <Text style={styles.subHeader}>Create a Post</Text>
 
+  <View style={[styles.inputRow, {marginTop: 10}]}>
+    <Text style={styles.label}>Name:</Text>
+    <TextInput
+      style={[styles.textInput, styles.inputGrow]}
+      placeholder="Dog's Name"
+      value={dogName}
+      onChangeText={setDogName}
+      placeholderTextColor={"#a9bcd4"}
+    />
+  </View>
+
+  <View style={styles.inputRow}>
+    <Text style={styles.label}>Location:</Text>
+    <TextInput
+      style={[styles.textInput, styles.inputGrow]}
+      placeholder="Location"
+      value={location}
+      onChangeText={setLocation}
+            placeholderTextColor={"#a9bcd4"}
+
+    />
+  </View>
+
+  <View style={styles.inputRow}>
+    <Text style={styles.label}>Description:</Text>
+    <TextInput
+      style={[styles.textInput, styles.inputGrow, {
+        overflow: "scroll"
+      }]}
+      placeholder="Description"
+      value={description}
+      onChangeText={setDescription}
+      placeholderTextColor={"#a9bcd4"}
+
+    />
+  </View>
+</View>
+              }
+              <View style={styles.horizonalButtonContainer}>
+                {!createPost &&
+               <TouchableOpacity
+                onPress={() => {
+                  setCreatePost(true);
+                }}
+                style={styles.modalButton}
+              >
+                <Text style={styles.modalButtonText}>Create Post</Text>
+              </TouchableOpacity>
+                }
+                {createPost &&
+               <TouchableOpacity
+                onPress={handleCreatePost}
+                style={styles.modalButton}
+              >
+                <Text style={styles.modalButtonText}>{
+                  loading ? "Posting..." : "Post"
+              }</Text>
+              </TouchableOpacity>
+                }
               <TouchableOpacity
                 onPress={() => {
                   setResults(null);
                   setSelectedImage(null);
                   setError(null);
+                  setCreatePost(false);
                 }}
                 style={styles.modalButton}
               >
-                <Text style={styles.modalButtonText}>Close</Text>
+                <Text style={styles.modalButtonText}>{
+                  !createPost ? "Close" : "Discard"
+              }</Text>
               </TouchableOpacity>
+
+                
+                </View>
             </View>
           </View>
         </Modal>
@@ -252,6 +377,32 @@ const styles = StyleSheet.create({
   spacer: {
     margin: 20,
   },
+  textInput: {
+  height: 48,
+  borderColor: "#a9bcd4",
+  borderWidth: 1,
+  borderRadius: 8,
+  paddingHorizontal: 12,
+  marginBottom: 15,
+  fontSize: 16,
+  backgroundColor: "#fff",
+ 
+},
+inputRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "100%",
+},
+label: {
+  fontSize: 16,
+  color: "#040909",
+  marginRight: 10,
+},
+
+inputGrow: {
+  flex: 1,
+},
   headerContainer: {
     flexDirection: "column",
     alignItems: "center",
@@ -283,6 +434,14 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     alignItems: "center",
   },
+  horizonalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+    width: "100%",
+    marginVertical: 10,
+  },
+
   cameraOverlay: {
     flex: 1,
     justifyContent: "flex-end",
@@ -339,6 +498,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#a9bcd4",
+    textAlign: "center",
   },
   footer: {
     marginTop: 30,

@@ -26,16 +26,16 @@
    cd ..
    cd ..
 
-   ```
+   ```y
 
 2. Installations 
 
    ```bash
-    pip install flask flask-cors torch torch-vision numpy Pillow six pymongo pydantic
+    pip install flask[async] flask-cors torch torchvision numpy Pillow six pymongo pydantic numpy
    ```
 
 3. Start backend, make sure to change out IP in app code if running locally.
 
    ```bash
-    python app.py
+    flask run --host=0.0.0.0 --port=5000
    ```
