@@ -1,0 +1,3 @@
+.venv/
+resnet152.pth
+.env

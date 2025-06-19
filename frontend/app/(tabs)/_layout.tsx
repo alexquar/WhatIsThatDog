@@ -1,11 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
+import { IconSymbol } from '@/components/ui/IconSymbol';;
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
@@ -39,6 +34,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.and.arrow.up" color={color} />,
         }}
       />
+            <Tabs.Screen
+        name="feed"
+        options={{
+          title: 'Feed',
+          headerShown: false,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="square.stack.3d.down.right" color={color} />,
+        }}
+        />
         <Tabs.Screen
         name="about"
         options={{
@@ -47,6 +50,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="info.circle.fill" color={color} />,
         }}
       />
+
     </Tabs>
   );
 }
