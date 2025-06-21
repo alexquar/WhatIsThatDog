@@ -1,4 +1,4 @@
-# #this is all the code that was used in a notebook on kaglge to get our weights and biases
+# #this is all the code that was used in a notebook on kagle to get our weights and biases
 
 # #it has been placed here for your convenience to see the process
 # import os, time

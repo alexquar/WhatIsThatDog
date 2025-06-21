@@ -48,8 +48,10 @@ def upload():
         def predict_breed(model, image_tensor, class_names):
             with torch.no_grad():
                 outputs = model(image_tensor)
-                _, predicted = outputs.max(1)
-                return class_names[predicted.item()]
+                probabilities = torch.nn.functional.softmax(outputs, dim=1)
+                confidence, predicted = torch.max(probabilities, 1)
+                print(f"Predicted class: {predicted.item()}, Confidence: {confidence.item()}")
+                return class_names[predicted.item()], confidence.item()
             
         model = load_model(model_path, num_classes=len(class_names), dropout_ratio=dropout_ratio)
 
@@ -57,7 +59,7 @@ def upload():
         image_tensor = transform_image(file, mean, std)
 
         # Predict
-        breed = predict_breed(model, image_tensor, class_names)
+        breed, confidence = predict_breed(model, image_tensor, class_names)
         
         #breed dictionary
         dog_info = {
@@ -184,12 +186,14 @@ def upload():
         }
     # get the breed info
         breed_info = dog_info[breed]
+        print(confidence)
         return jsonify({
             "success": True,
             "message": "File uploaded successfully",
             "data": {
                      "breed": breed.replace('_', ' '),
-                     "breed_info": breed_info.replace('_', ' ')
+                     "breed_info": breed_info.replace('_', ' '),
+                     "confidence": confidence,
                     }
         }), 200
     except Exception as e:

@@ -71,7 +71,7 @@ const About = () => {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Made with ❤️ by Dog Lovers for Dog Lovers</Text>
-          <Text style={styles.footerText}>© 2024 What's That Dog?!</Text>
+          <Text style={styles.footerText}>© 2025 What's That Dog?!</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
