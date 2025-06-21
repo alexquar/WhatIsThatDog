@@ -31,7 +31,7 @@
 2. Installations 
 
    ```bash
-    pip install flask[async] flask-cors torch torchvision numpy Pillow six pymongo pydantic numpy
+    pip install flask[async] flask-cors torch torchvision numpy Pillow six pymongo pydantic numpy boto3
    ```
 
 3. Start backend, make sure to change out IP in app code if running locally.

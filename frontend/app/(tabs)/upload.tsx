@@ -10,12 +10,13 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
-  TextInput
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraView } from "expo-camera";
 import { router } from "expo-router";
-
 
 const UploadPage = () => {
   const [selectedImage, setSelectedImage] =
@@ -25,6 +26,7 @@ const UploadPage = () => {
   interface Results {
     breed: string;
     breed_info: string;
+    confidence: number;
   }
   const [createPost, setCreatePost] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
@@ -103,7 +105,7 @@ const UploadPage = () => {
       name: selectedImage.uri.split("/").pop() || "image.jpg", // Ensure the file name is extracted properly
     } as unknown as File);
     try {
-      const res = await fetch("http://10.0.0.64:5000", {
+      const res = await fetch("http://172.17.0.3:5000", {
         method: "POST",
         body: formData,
         headers: {
@@ -137,7 +139,7 @@ const UploadPage = () => {
       return;
     }
     setLoading(true);
-        const formData = new FormData();
+    const formData = new FormData();
     formData.append("file", {
       uri: selectedImage?.uri,
       type: selectedImage?.type || "image/jpeg",
@@ -149,12 +151,12 @@ const UploadPage = () => {
     formData.append("dog_breed", results?.breed || "");
     formData.append("date", new Date().toISOString());
     try {
-      const response = await fetch("http://10.0.0.64:5000/post", {
+      const response = await fetch("http://172.17.0.3:5000/post", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: formData
+        body: formData,
       });
       const data = await response.json();
       if (data.success) {
@@ -166,8 +168,7 @@ const UploadPage = () => {
         setResults(null);
         setSelectedImage(null);
         router.push("/feed");
-      }
-      else {
+      } else {
         Alert.alert("Error", "Failed to create post. Please try again.");
       }
     } catch (error) {
@@ -176,10 +177,6 @@ const UploadPage = () => {
     }
     setLoading(false);
   };
-
-
-
-    
 
   return (
     <SafeAreaView style={styles.container}>
@@ -202,7 +199,7 @@ const UploadPage = () => {
             about page.{" "}
           </Text>
         </View>
-
+        {!selectedImage && 
         <View style={styles.buttonContainer}>
           <Text style={styles.subHeader}>Provide an image:</Text>
           <TouchableOpacity style={styles.button} onPress={prepTakePic}>
@@ -212,6 +209,7 @@ const UploadPage = () => {
             <Text style={styles.buttonText}>Upload from Gallery</Text>
           </TouchableOpacity>
         </View>
+}
 
         {cameraOpen && (
           <View style={styles.previewContainer}>
@@ -232,14 +230,25 @@ const UploadPage = () => {
         )}
 
         {selectedImage && (
+          <>
           <View style={styles.previewContainer}>
             <Text style={styles.subHeader}>Preview:</Text>
-            <Image
-              source={{ uri: selectedImage.uri }}
-              style={styles.previewImage}
-            />
+            <View style={[styles.imageContainer, {
+              marginTop: 10,
+            }]}>
+              <Image
+          source={{ uri: selectedImage.uri }}
+          style={styles.previewImage}
+              />
+              <TouchableOpacity 
+          style={styles.clearButton}
+          onPress={() => setSelectedImage(null)}
+              >
+          <Text style={styles.clearButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
+        
 
         <View style={styles.buttonContainer}>
           <Text style={styles.subHeader}>Check what's that dog:</Text>
@@ -252,10 +261,12 @@ const UploadPage = () => {
             </Text>
           </TouchableOpacity>
         </View>
+        </>
+        )}
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Made with ❤️ by Dog Lovers</Text>
-          <Text style={styles.footerText}>© 2024 What's That Dog?!</Text>
+          <Text style={styles.footerText}>© 2025 What's That Dog?!</Text>
         </View>
 
         <Modal
@@ -268,100 +279,115 @@ const UploadPage = () => {
             setError(null);
           }}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.previewContainer}>
-                <Image
-                  source={{ uri: selectedImage?.uri }}
-                  style={styles.previewImage}
-                />
-              </View>
-              <Text style={styles.modalTitle}>
-                {results?.breed}
-              </Text>
-              <Text style={styles.modalText}>{results?.breed_info}</Text>
-              {
-                createPost &&
-                <View>
-  <Text style={styles.subHeader}>Create a Post</Text>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
+            <ScrollView
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ flexGrow: 1 }}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <View style={styles.previewContainer}>
+                    <Image
+                      source={{ uri: selectedImage?.uri }}
+                      style={styles.previewImage}
+                    />
+                  </View>
+                  <Text style={styles.modalTitle}>{results?.breed}</Text>
+                  <Text style={{
+                    fontSize: 16,
+                    color: "#5fadae",
+                    marginBottom: 10,
+                    textAlign: "center",
+                    fontWeight: "600",
+                  }}>{((results?.confidence ?? 0) * 100).toFixed(2)}% confidence</Text>
+                  <Text style={styles.modalText}>{results?.breed_info}</Text>
+                  {createPost && (
+                    <View>
+                      <Text style={styles.subHeader}>Create a Post</Text>
 
-  <View style={[styles.inputRow, {marginTop: 10}]}>
-    <Text style={styles.label}>Name:</Text>
-    <TextInput
-      style={[styles.textInput, styles.inputGrow]}
-      placeholder="Dog's Name"
-      value={dogName}
-      onChangeText={setDogName}
-      placeholderTextColor={"#a9bcd4"}
-    />
-  </View>
+                      <View style={[styles.inputRow, { marginTop: 10 }]}>
+                        <Text style={styles.label}>Name:</Text>
+                        <TextInput
+                          style={[styles.textInput, styles.inputGrow]}
+                          placeholder="Dog's Name"
+                          value={dogName}
+                          onChangeText={setDogName}
+                          placeholderTextColor={"#a9bcd4"}
+                        />
+                      </View>
 
-  <View style={styles.inputRow}>
-    <Text style={styles.label}>Location:</Text>
-    <TextInput
-      style={[styles.textInput, styles.inputGrow]}
-      placeholder="Location"
-      value={location}
-      onChangeText={setLocation}
-            placeholderTextColor={"#a9bcd4"}
+                      <View style={styles.inputRow}>
+                        <Text style={styles.label}>Location:</Text>
+                        <TextInput
+                          style={[styles.textInput, styles.inputGrow]}
+                          placeholder="Location"
+                          value={location}
+                          onChangeText={setLocation}
+                          placeholderTextColor={"#a9bcd4"}
+                        />
+                      </View>
 
-    />
-  </View>
-
-  <View style={styles.inputRow}>
-    <Text style={styles.label}>Description:</Text>
-    <TextInput
-      style={[styles.textInput, styles.inputGrow, {
-        overflow: "scroll"
-      }]}
-      placeholder="Description"
-      value={description}
-      onChangeText={setDescription}
-      placeholderTextColor={"#a9bcd4"}
-
-    />
-  </View>
-</View>
-              }
-              <View style={styles.horizonalButtonContainer}>
-                {!createPost &&
-               <TouchableOpacity
-                onPress={() => {
-                  setCreatePost(true);
-                }}
-                style={styles.modalButton}
-              >
-                <Text style={styles.modalButtonText}>Create Post</Text>
-              </TouchableOpacity>
-                }
-                {createPost &&
-               <TouchableOpacity
-                onPress={handleCreatePost}
-                style={styles.modalButton}
-              >
-                <Text style={styles.modalButtonText}>{
-                  loading ? "Posting..." : "Post"
-              }</Text>
-              </TouchableOpacity>
-                }
-              <TouchableOpacity
-                onPress={() => {
-                  setResults(null);
-                  setSelectedImage(null);
-                  setError(null);
-                  setCreatePost(false);
-                }}
-                style={styles.modalButton}
-              >
-                <Text style={styles.modalButtonText}>{
-                  !createPost ? "Close" : "Discard"
-              }</Text>
-              </TouchableOpacity>
-
-                
+                      <View style={styles.inputRow}>
+                        <Text style={styles.label}>Description:</Text>
+                        <TextInput
+                          style={[
+                            styles.textInput,
+                            styles.inputGrow,
+                            {
+                              overflow: "scroll",
+                            },
+                          ]}
+                          placeholder="Description"
+                          value={description}
+                          onChangeText={setDescription}
+                          placeholderTextColor={"#a9bcd4"}
+                        />
+                      </View>
+                    </View>
+                  )}
+                  <View style={styles.horizonalButtonContainer}>
+                    {!createPost && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCreatePost(true);
+                        }}
+                        style={styles.modalButton}
+                      >
+                        <Text style={styles.modalButtonText}>Create Post</Text>
+                      </TouchableOpacity>
+                    )}
+                    {createPost && (
+                      <TouchableOpacity
+                        onPress={handleCreatePost}
+                        style={styles.modalButton}
+                      >
+                        <Text style={styles.modalButtonText}>
+                          {loading ? "Posting..." : "Post"}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => {
+                        setResults(null);
+                        setSelectedImage(null);
+                        setError(null);
+                        setCreatePost(false);
+                      }}
+                      style={styles.modalButton}
+                    >
+                      <Text style={styles.modalButtonText}>
+                        {!createPost ? "Close" : "Discard"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-            </View>
-          </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </Modal>
       </ScrollView>
     </SafeAreaView>
@@ -378,31 +404,30 @@ const styles = StyleSheet.create({
     margin: 20,
   },
   textInput: {
-  height: 48,
-  borderColor: "#a9bcd4",
-  borderWidth: 1,
-  borderRadius: 8,
-  paddingHorizontal: 12,
-  marginBottom: 15,
-  fontSize: 16,
-  backgroundColor: "#fff",
- 
-},
-inputRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "100%",
-},
-label: {
-  fontSize: 16,
-  color: "#040909",
-  marginRight: 10,
-},
+    height: 48,
+    borderColor: "#a9bcd4",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 15,
+    fontSize: 16,
+    backgroundColor: "#fff",
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+  },
+  label: {
+    fontSize: 16,
+    color: "#040909",
+    marginRight: 10,
+  },
 
-inputGrow: {
-  flex: 1,
-},
+  inputGrow: {
+    flex: 1,
+  },
   headerContainer: {
     flexDirection: "column",
     alignItems: "center",
@@ -553,6 +578,38 @@ inputGrow: {
     fontSize: 16,
     fontWeight: "bold",
   },
+  imageContainer: {
+          position: 'relative',  // This allows absolute positioning of children
+          width: 200,
+          height: 200,
+        },
+        clearButton: {
+          position: 'absolute',
+          top: -10,
+          right: -10,
+          backgroundColor: '#5fadae',
+          width: 30,
+          height: 30,
+          borderRadius: 15,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: "#000",
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+        },
+        clearButtonText: {
+          color: 'white',
+          fontSize: 20,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          lineHeight: 28,
+        }
+
 });
 
 export default UploadPage;
