@@ -1,9 +1,13 @@
 # Welcome to what's that dog
 
 
-## Frontend
+## Frontend (If you just want to test it out ignore backend setup)
 
 1. Install dependencies
+
+   ```bash
+   cd frontend
+   ```
 
    ```bash
    npm install
@@ -15,7 +19,7 @@
     npx expo start
    ```
 
-## Backend
+## Backend (Can also use docker)
 
 1. Virtual env
 
@@ -23,19 +27,20 @@
    python -m venv .venv
    cd .venv/scripts
    ./activate
-   cd ..
-   cd ..
-
-   ```y
+   cd ../../backend
+   ```
 
 2. Installations 
 
    ```bash
-    pip install flask[async] flask-cors torch torchvision numpy Pillow six pymongo pydantic numpy boto3
+   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+   pip install flask[async] flask-cors numpy Pillow six pymongo pydantic numpy boto3 python-dotenv waitress
    ```
 
-3. Start backend, make sure to change out IP in app code if running locally.
+3. Start backend
 
    ```bash
-    flask run --host=0.0.0.0 --port=5000
+    python app.py
    ```
+
+4. Modify app code to make reqs to port 5000 running on your local IP
