@@ -105,7 +105,7 @@ const UploadPage = () => {
       name: selectedImage.uri.split("/").pop() || "image.jpg", // Ensure the file name is extracted properly
     } as unknown as File);
     try {
-      const res = await fetch("http://172.17.0.3:5000", {
+      const res = await fetch("https://backend-54803426778.northamerica-northeast2.run.app", {
         method: "POST",
         body: formData,
         headers: {
@@ -151,7 +151,7 @@ const UploadPage = () => {
     formData.append("dog_breed", results?.breed || "");
     formData.append("date", new Date().toISOString());
     try {
-      const response = await fetch("http://172.17.0.3:5000/post", {
+      const response = await fetch("https://backend-54803426778.northamerica-northeast2.run.app/post", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 type Post = {
   date: Date;
@@ -28,7 +29,7 @@ const Feed = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://172.17.0.3:5000/posts");
+      const response = await fetch("https://backend-54803426778.northamerica-northeast2.run.app/posts");
       if (!response.ok) throw new Error("Network response was not ok");
 
       const data = await response.json();
@@ -50,7 +51,7 @@ const Feed = () => {
       return;
     }
     try {
-      const response = await fetch(`http://172.17.0.3:5000/post/${postId}`, {
+      const response = await fetch(`https://backend-54803426778.northamerica-northeast2.run.app/post/${postId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -131,16 +132,22 @@ const Feed = () => {
                   <Text style={styles.postDescription}>{post.description}</Text>
                 </View>
                 <View style={{ position: "relative" }}>
-                  <Image
+                  {loading ? (
+                  <View style={[styles.postImage, styles.loadingContainer]}>
+                    <ActivityIndicator size="large" color="#8492c1" />
+                  </View>
+                  ) : (
+                  <>
+                    <Image
                     source={
                       post?.file
-                        ? { uri: post.file }
-                        : require("../../assets/images/logo.png")
+                      ? { uri: post.file }
+                      : require("../../assets/images/logo.png")
                     }
                     style={styles.postImage}
                     resizeMode="cover"
-                  />
-                  <TouchableOpacity
+                    />
+                    <TouchableOpacity
                     onPress={() => handleLikePost(post._id)}
                     style={{
                       position: "absolute",
@@ -150,9 +157,11 @@ const Feed = () => {
                       padding: 8,
                       borderRadius: 20,
                     }}
-                  >
+                    >
                     <Text style={styles.postLikes}>❤️ {post.likes}</Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                  </>
+                  )}
                 </View>
               </View>
             ))
@@ -278,9 +287,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#040909",
   },
-    picker: {
+  picker: {
     height: 50,
     width: "100%",
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e6f3f7',
   },
 });
 

@@ -5,6 +5,7 @@ from flask_cors import CORS
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from waitress import serve
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
@@ -39,4 +40,5 @@ def handle_update_likes(id:int):
     return update_likes(collection, id)
     
 if __name__ == "__main__":
-    app.run()
+    print("Server is running on port 5000")
+    serve(app, host='0.0.0.0', port=5000)
