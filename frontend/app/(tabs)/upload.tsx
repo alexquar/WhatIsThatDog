@@ -255,6 +255,7 @@ const UploadPage = () => {
           <TouchableOpacity
             style={styles.buttonSecondary}
             onPress={submitImage}
+            disabled={loading}
           >
             <Text style={styles.buttonSecondaryText}>
               {loading ? "Submitting..." : "Submit"}

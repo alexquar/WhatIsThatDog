@@ -40,11 +40,18 @@ const Index = () => {
           style={styles.button}>
             <Text style={styles.buttonText}>Upload a Picture</Text>
           </TouchableOpacity>
+          <View style={{flexDirection: 'row', gap: 10, marginTop: 10}}>
           <TouchableOpacity 
           onPress={() => router.navigate('/(tabs)/about')}
           style={styles.buttonSecondary}>
             <Text style={styles.buttonSecondaryText}>Learn More</Text>
           </TouchableOpacity>
+          <TouchableOpacity 
+          onPress={() => router.navigate('/(tabs)/feed')}
+          style={styles.buttonSecondary}>
+            <Text style={styles.buttonSecondaryText}>See Feed</Text>
+          </TouchableOpacity>
+          </View>
         </View>
         
         <View style={styles.footer}>
